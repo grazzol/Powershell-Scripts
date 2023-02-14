@@ -1,0 +1,301 @@
+Add-Type -AssemblyName System.speech
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+# --- USEFUL ---
+
+
+$nomApplicationInstaller = Get-WmiObject -Class Win32_Product | Select-Object -Property Name 
+
+ $ip = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled -eq "True"}
+
+# - mise a l'échelle pour l'espace de RAM -
+
+function Bytes2String { param([int64]$Bytes)
+        if ($Bytes -lt 1024) { return "$Bytes bytes" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)KB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)MB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)GB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)TB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)PB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)EB" }
+}
+
+# - Type de RAM -
+
+function GetRAMType { param([int]$Type)
+	switch($Type) {
+	2 { return "DRAM" }
+	5 { return "EDO RAM" }
+	6 { return "EDRAM" }
+	7 { return "VRAM" }
+	8 { return "SRAM" }
+	10 { return "ROM" }
+	11 { return "Flash" }
+	12 { return "EEPROM" }
+	13 { return "FEPROM" }
+	14 { return "EPROM" }
+	15 { return "CDRAM" }
+	16 { return "3DRAM" }
+	17 { return "SDRAM" }
+	18 { return "SGRAM" }
+	19 { return "RDRAM" }
+	20 { return "DDR RAM" }
+	21 { return "DDR2 RAM" }
+	22 { return "DDR2 FB-DIMM" }
+	24 { return "DDR3 RAM" }
+	26 { return "DDR4 RAM" }
+	27 { return "DDR5 RAM" }
+	28 { return "DDR6 RAM" }
+	29 { return "DDR7 RAM" }
+	default { return "RAM" }
+	}
+}
+
+# - Information sur la RAM - 
+
+function RAMINFO{
+    try {
+		$Banks = Get-WmiObject -Class Win32_PhysicalMemory
+		foreach ($Bank in $Banks) {
+			$Capacity = Bytes2String($Bank.Capacity)
+			$Type = GetRAMType $Bank.SMBIOSMemoryType
+			$Speed = $Bank.Speed
+			[float]$Voltage = $Bank.ConfiguredVoltage / 1000.0
+			"$Capacity $Type ($($Speed)MHz, $($Voltage)V)"
+	}
+} catch {
+	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+}
+}
+
+# - Récupération du nom du user -
+
+function Usernam {
+    $olFolderInbox = 5
+    $outlook = new-object -com outlook.application;
+    $ns = $outlook.GetNameSpace("MAPI");
+    $inbox = $ns.GetDefaultFolder($olFolderInbox)
+    $inbox.items | foreach {
+        $Expediteur = $_.SenderName
+    }
+    $Expediteur
+    }
+
+# --- FORM ---
+
+$Form = New-Object System.Windows.Forms.Form
+$Form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle #Modifies the window border
+$Form.Text = "Informations Importantes"
+$Form.Size = New-Object System.Drawing.Size(1000, 1000)  
+$Form.StartPosition = "CenterScreen" #Loads the window in the center of the screen
+$Form.BackgroundImageLayout = "Zoom"
+$Form.MaximizeBox = $False
+$Form.WindowState = "Normal"
+$Form.KeyPreview = $True
+$Form.BackColor = "AliceBlue"
+$Form.Font = "Microsoft Sans Serif,10"
+
+# --- LABLE --- 
+
+$Usernam = Usernam
+$label_INFO = New-Object System.Windows.Forms.Label
+$label_INFO.Text = "Infomation utilisateur : " + $Usernam
+$label_INFO.Location = New-Object System.Drawing.Point(150,50)
+$label_INFO.Size = New-Object System.Drawing.Size(600, 40)
+
+$label_VISA = New-Object System.Windows.Forms.Label
+$label_VISA.Text = "Visa :"
+$label_VISA.Location = New-Object System.Drawing.Point(150,150)
+$label_VISA.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_CB = New-Object System.Windows.Forms.Label
+$label_CB.Text = "Nom de la machine :"
+$label_CB.Location = New-Object System.Drawing.Point(150,200)
+$label_CB.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_VERS_BIOS = New-Object System.Windows.Forms.Label
+$label_VERS_BIOS.Text = "Version du BIOS :"
+$label_VERS_BIOS.Location = New-Object System.Drawing.Point(150,250)
+$label_VERS_BIOS.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_MOD = New-Object System.Windows.Forms.Label
+$label_MOD.Text = "Model de la machine :"
+$label_MOD.Location = New-Object System.Drawing.Point(150,300)
+$label_MOD.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_VERS_MAST = New-Object System.Windows.Forms.Label
+$label_VERS_MAST.Text = "Version du Master :"
+$label_VERS_MAST.Location = New-Object System.Drawing.Point(150,350)
+$label_VERS_MAST.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_RAM = New-Object System.Windows.Forms.Label
+$label_RAM.Text = "Type de RAM et info :"
+$label_RAM.Location = New-Object System.Drawing.Point(150,400)
+$label_RAM.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_APP = New-Object System.Windows.Forms.Label
+$label_APP.Text = "Applications installées :"
+$label_APP.Location = New-Object System.Drawing.Point(150,550)
+$label_APP.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_MAC = New-Object System.Windows.Forms.Label
+$label_MAC.Text = "Adresse MAC :"
+$label_MAC.Location = New-Object System.Drawing.Point(150,450)
+$label_MAC.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_IP = New-Object System.Windows.Forms.Label
+$label_IP.Text = "Adresse IP :"
+$label_IP.Location = New-Object System.Drawing.Point(150,500)
+$label_IP.Size = New-Object System.Drawing.Size(250, 40)
+
+
+# -- ADD -- 
+
+$Form.Controls.Add($label_INFO);
+$Form.Controls.Add($label_VISA);
+$Form.Controls.Add($label_CB);
+$Form.Controls.Add($label_VERS_BIOS);
+$Form.Controls.Add($label_MOD);
+$Form.Controls.Add($label_VERS_MAST);
+$Form.Controls.Add($label_RAM);
+$Form.Controls.Add($label_APP);
+$Form.Controls.Add($label_MAC);
+$Form.Controls.Add($label_IP);
+
+# --- TEXT BOX --- 
+
+$TextBox_VISA = New-Object System.Windows.Forms.TextBox
+$TextBox_VISA.ReadOnly = 'true'
+$TextBox_VISA.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VISA.Location = New-Object System.Drawing.Point(400, 150)
+$TextBox_VISA.Font = "Microsoft Sans Serif,20"
+$TextBox_VISA.Text = ((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]
+
+$TextBox_CB = New-Object System.Windows.Forms.TextBox
+$TextBox_CB.ReadOnly = 'true'
+$TextBox_CB.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_CB.Location = New-Object System.Drawing.Point(400, 200)
+$TextBox_CB.Font = "Microsoft Sans Serif,20"
+$TextBox_CB.Text = [system.environment]::MachineName
+
+$TextBox_VERS_BIOS = New-Object System.Windows.Forms.TextBox
+$TextBox_VERS_BIOS.ReadOnly = 'true'
+$TextBox_VERS_BIOS.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VERS_BIOS.Location = New-Object System.Drawing.Point(400, 250)
+$TextBox_VERS_BIOS.Font = "Microsoft Sans Serif,20"
+$TextBox_VERS_BIOS.Text = (Get-CimInstance -Namespace root\cimv2 -ClassName Win32_BIOS).Name
+
+$TextBox_MOD = New-Object System.Windows.Forms.TextBox
+$TextBox_MOD.ReadOnly = 'true'
+$TextBox_MOD.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_MOD.Location = New-Object System.Drawing.Point(400, 300)
+$TextBox_MOD.Font = "Microsoft Sans Serif,20"
+$TextBox_MOD.Text = (Get-CimInstance -Namespace root\cimv2 -ClassName Win32_ComputerSystem).Model
+
+$TextBox_VERS_MAST = New-Object System.Windows.Forms.TextBox
+$TextBox_VERS_MAST.ReadOnly = 'true'
+$TextBox_VERS_MAST.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VERS_MAST.Location = New-Object System.Drawing.Point(400, 350)
+$TextBox_VERS_MAST.Font = "Microsoft Sans Serif,20"
+$TextBox_VERS_MAST.Text = (Get-CimInstance -class Win32_OperatingSystem).Version
+
+$TextBox_RAM = New-Object System.Windows.Forms.TextBox
+$TextBox_RAM.ReadOnly = 'true'
+$TextBox_RAM.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_RAM.Location = New-Object System.Drawing.Point(400, 400)
+$TextBox_RAM.Font = "Microsoft Sans Serif,20"
+$TextBox_RAM.Text = RAMINFO
+
+$TextBox_MAC = New-Object System.Windows.Forms.TextBox
+$TextBox_MAC.ReadOnly = 'true'
+$TextBox_MAC.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_MAC.Location = New-Object System.Drawing.Point(400, 450)
+$TextBox_MAC.Font = "Microsoft Sans Serif,20"
+$TextBox_MAC.Text = $ip.MacAddress
+
+$TextBox_IP = New-Object System.Windows.Forms.TextBox
+$TextBox_IP.ReadOnly = 'true'
+$TextBox_IP.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_IP.Location = New-Object System.Drawing.Point(400, 500)
+$TextBox_IP.Font = "Microsoft Sans Serif,20"
+$TextBox_IP.Text =  $ip.IPAddress[0]
+
+# -- ADD -- 
+
+$Form.Controls.Add($TextBox_VISA);
+$Form.Controls.Add($TextBox_CB);
+$Form.Controls.Add($TextBox_VERS_BIOS);
+$Form.Controls.Add($TextBox_MOD);
+$Form.Controls.Add($TextBox_VERS_MAST);
+$Form.Controls.Add($TextBox_RAM);
+$Form.Controls.Add($TextBox_MAC);
+$Form.Controls.Add($TextBox_IP);
+
+# --- COMBOBOX ---
+
+$liste1 = New-Object System.Windows.Forms.Combobox
+$liste1.Location = New-Object Drawing.Point(400,550)
+$liste1.Size = New-Object System.Drawing.Size(450,40)
+$liste1.DropDownStyle = "DropDownList"
+
+
+
+for ($i = 0 ; $i -lt $nomApplicationInstaller.Count ; $i++){
+    if ($nomApplicationInstaller.Name[$i]){  # gestion des applications null
+        $liste1.Items.AddRange($nomApplicationInstaller.Name[$i])
+    } 
+}
+
+
+# --- ADD ---
+
+$Form.Controls.Add($liste1)
+
+# --- BUTTON --- 
+
+$button_MyApps = New-Object System.Windows.Forms.Button
+$button_MyApps.Text = "MyApp's"
+$button_MyApps.Size = New-Object System.Drawing.Size(100 , 100)
+$button_MyApps.Location = New-Object System.Drawing.Point(150, 600)
+
+$button_Wips = New-Object System.Windows.Forms.Button
+$button_Wips.Text = "Wip's"
+$button_Wips.Size = New-Object System.Drawing.Size(100 , 100)
+$button_Wips.Location = New-Object System.Drawing.Point(300, 600)
+
+$button_Snow = New-Object System.Windows.Forms.Button
+$button_Snow.Text = "S-Now"
+$button_Snow.Size = New-Object System.Drawing.Size(100 , 100)
+$button_Snow.Location = New-Object System.Drawing.Point(450, 600)
+
+# --- ADD ---- 
+
+$Form.Controls.Add($button_MyApps)
+$Form.Controls.Add($button_Wips)
+$Form.Controls.Add($button_Snow)
+
+# --- FUNCTION ----
+
+$button_MyApps.Add_Click(
+{
+    start chrome https://myapplications.microsoft.com/
+})
+
+$button_Wips.Add_Click(
+{
+    start chrome https://wips.servier.com/home/
+})
+
+$button_Snow.Add_Click(
+{
+    start chrome https://servier2.service-now.com/
+})
+
+[void] $Form.ShowDialog()

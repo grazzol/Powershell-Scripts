@@ -1,0 +1,769 @@
+Add-Type -AssemblyName System.speech
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+# --- USEFUL ---
+
+$images = @(
+'arw','bmp','cr2','crw','dcm','dds','djvu','djvu',
+'dmg','dng','fpx','gif','ico','ithmb','jp2','jpeg',
+'jpg','nef','nrw','orf','pcd','pict','png','psd',
+'sfw','tga','tif','tiff','webp','xcf'
+)
+
+$MonLogo = "iVBORw0KGgoAAAANSUhEUgAAAbQAAAG4CAYAAAAt9hI9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAD1zSURBVHhe7d0HfFRV+v/xhxoIEGrooQWlq1FEQRQUFQEBUWBVwAJYAHcV9G9dEd1VUH+iroKrgK6UXQRsqCAqilhARVGR3oTQQy8hoeV/n5sbiZBJ7p25SWbOfN77yjJ3QCCTcL9zznnOc4ps274rQywZmf+v/wcAQAQoIkWKOA8tRTIszmMAACJWUedHAAAiGoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAiHgnTpwg0AAAZiDQAABGINAAABFNpxsVgQYAMAKBBgAwAoEGAIhYWdONikADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwBEpOwVjopAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMARKSiRf8cYQQaAMAIBBoAwAgEGgDACAQaAMAIBBoAwAgEGgAgYmWvdCTQAABGINAAAEYg0AAAES1r2pFAAwAYgUADABihSIbFeQwAQMRihAYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMAKBBgAwAoEGADACgQYAMEKRDIvzGADC2okTJ2TFihVSokQJiY+Pl7i4OClalPflyESgAYgYkydPlscee8y5ypSYmCgJCQnSrFkzadSokdSpU0caN25shx6iC4EGICLs3r1bbr/9dlm8eLHzTGA6envyySflsssukyJFijjPwnSM1QFEhNWrV8uSJUucq9ylpKTI4MGDZfz48XL8+HHnWZiOQAMQ9jSU5s6dK8eOHXOeyZv+2lGjRsmzzz4raWlpzrMwGYEGIOzt3LlTvv/+e+fKm3HjxtmhdvjwYecZmIpAAxD2Vq5cKcuXL3euvNNikoULFzpXMBWBBiCsad2ajs68TDeeSv/bOXPmyJEjR5xnYCICDUBY27Nnjy+jK62O3L59u3MFExFogAF0w/GyZcvsKkDT1oo2btwoq1atcq6Ct2bNGklOTnauYCICDYhwu3btkgEDBkjXrl3lmmuukebNm0v79u3lvvvuk9mzZ8uWLVvk6NGjzq+OPD///LMcOnTIuQqNhiPMRaABEW7BggUyf/585yqTjkTeffddueuuu+Tiiy+2Q+7OO++UpUuX2mtSkUJHm7/88otzFToCzWwEGhDhdKoxL1oU8emnn8q1114rffv2lW+//TYigm3//v32VKFf9u3bF9GjVeSOQAMiXP369Z1HedNg0wILnY7UUvhwpyNNP9bPsqSmpoZULYnwRqABEU7Xy1q1auVcuaPVftp5I9xHaTo6I4DgFoEGRDhtxNuvXz8pXry484w7EyZMsNffwpWG7e+//+5c+aNChQpSsmRJ5wqmIdAAA+goTascvdD1pOHDh9tNf8ORFoRohaafSpcuLcWKFXOuYBoCDWFp7dq18s033/zpQ/dY7d27195zhT+LjY2Vp59+Wn788Uf7AEwt+tCQy8v69evlr3/9q73pONymH9PT02Xz5s3OFZA3Ag1hSQsd9MDGpk2b2qcSK614++yzz+SJJ56QW265xW44+9NPP9F01qEjD51S04Mtq1WrJjfffLOraUgdofXs2VOmTJniPBMeDh48aH8AbnHAJwqdfgtqe6NFixbJ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QAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGIFAAwAYgUADABiBQAMAGEDk/wNcShfUyXmYHQAAAABJRU5ErkJggg=="
+
+$Global:indice = 0
+
+
+function base64toimage($base64image)
+{
+    $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+    $bitmap.BeginInit()
+    $bitmap.StreamSource = [IO.MemoryStream][Convert]::FromBase64String($base64image)
+    $bitmap.EndInit()
+    $bitmap.Freeze()
+    $image = [Drawing.Bitmap][Drawing.Image]::FromStream($bitmap.StreamSource)
+    $image
+}
+
+# --- FORM ---
+
+$Form = New-Object System.Windows.Forms.Form
+$Form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle #Modifies the window border
+$Form.Text = "Mes Apps Powershell"
+$Form.Size = New-Object System.Drawing.Size(1000, 1000)  
+$Form.StartPosition = "CenterScreen" #Loads the window in the center of the screen
+$Form.BackgroundImageLayout = "Zoom"
+$Form.MaximizeBox = $False
+$Form.WindowState = "Normal"
+$Form.KeyPreview = $True
+$Form.BackColor = "Ivory"
+$Form.Font = "Microsoft Sans Serif,10"
+$iconimage=base64toimage($MonLogo)
+$formIcon = [Drawing.Icon]::FromHandle($iconimage.GetHicon())
+$form.Icon = $formIcon
+
+# --- TABE CONTROL ---
+
+$tabcontrol1 = New-Object 'System.Windows.Forms.TabControl'
+$tabcontrol1.Alignment = 'top'
+$tabcontrol1.Location = '50, 50'
+$tabcontrol1.Multiline = $True
+$tabcontrol1.Name = 'tabcontrol1'
+$tabcontrol1.SelectedIndex = 0
+$tabcontrol1.Size = '900, 850'
+$tabcontrol1.TabIndex = 0
+
+# - ADD -
+
+$Form.Controls.Add($tabcontrol1)
+
+# --- TABLE PAGES ---
+
+$tabpage1 = New-Object System.Windows.Forms.TabPage
+$tabpage1.Name = 'TODO List'
+$tabpage1.TabIndex = 0
+$tabpage1.Text = 'TODO List'
+
+$tabpage2 = New-Object System.Windows.Forms.TabPage
+$tabpage2.Name = 'Carousel'
+$tabpage2.TabIndex = 1
+$tabpage2.Text = 'Carousel'
+
+$tabpage3 = New-Object System.Windows.Forms.TabPage
+$tabpage3.Name = 'Robot Voice'
+$tabpage3.TabIndex = 2
+$tabpage3.Text = 'Robot Voice'
+
+$tabpage4 = New-Object System.Windows.Forms.TabPage
+$tabpage4.Name = 'Générateur de mot de passe'
+$tabpage4.TabIndex = 3
+$tabpage4.Text = 'Générateur de mot de passe'
+
+$tabpage5 = New-Object System.Windows.Forms.TabPage
+$tabpage5.Name = 'Un  petit Fun Fact ?'
+$tabpage5.TabIndex = 4
+$tabpage5.Text = 'Un  petit Fun Fact ?'
+
+$tabpage6 = New-Object System.Windows.Forms.TabPage
+$tabpage6.Name = 'Info User'
+$tabpage6.TabIndex = 5
+$tabpage6.Text = 'Info User'
+
+$tabpage7 = New-Object System.Windows.Forms.TabPage
+$tabpage7.Name = 'Info Wifi Connu'
+$tabpage7.TabIndex = 6
+$tabpage7.Text = 'Info Wifi Connu'
+
+# - ADD -
+
+$tabcontrol1.Controls.Add($tabpage1)
+$tabcontrol1.Controls.Add($tabpage2)
+$tabcontrol1.Controls.Add($tabpage3)
+$tabcontrol1.Controls.Add($tabpage4)
+$tabcontrol1.Controls.Add($tabpage5)
+$tabcontrol1.Controls.Add($tabpage6)
+$tabcontrol1.Controls.Add($tabpage7)
+
+# --- LABELS PAGE 1 ---
+
+$label = New-Object System.Windows.Forms.Label
+$label.Text = "Tache a effectuer :"
+$label.Location = New-Object System.Drawing.Point(50,50)
+$label.Size = New-Object System.Drawing.Size(200, 30)
+
+$label = New-Object System.Windows.Forms.Label
+$label.Text = "Tache a effectuer :"
+$label.Location = New-Object System.Drawing.Point(50,50)
+$label.Size = New-Object System.Drawing.Size(200, 30)
+
+$label1 = New-Object System.Windows.Forms.Label
+$label1.Text = "1"
+$label1.Location = New-Object System.Drawing.Point(50,100)
+$label1.Size = New-Object System.Drawing.Size(30, 30)
+
+$label2 = New-Object System.Windows.Forms.Label
+$label2.Text = "2"
+$label2.Location = New-Object System.Drawing.Point(50,150)
+$label2.Size = New-Object System.Drawing.Size(30, 30)
+
+$label3 = New-Object System.Windows.Forms.Label
+$label3.Text = "3"
+$label3.Location = New-Object System.Drawing.Point(50,200)
+$label3.Size = New-Object System.Drawing.Size(30, 30)
+
+$label4 = New-Object System.Windows.Forms.Label
+$label4.Text = "4"
+$label4.Location = New-Object System.Drawing.Point(50,250)
+$label4.Size = New-Object System.Drawing.Size(30, 30)
+
+$label5 = New-Object System.Windows.Forms.Label
+$label5.Text = "5"
+$label5.Location = New-Object System.Drawing.Point(50,300)
+$label5.Size = New-Object System.Drawing.Size(30, 30)
+
+$label6 = New-Object System.Windows.Forms.Label
+$label6.Text = "6"
+$label6.Location = New-Object System.Drawing.Point(50,350)
+$label6.Size = New-Object System.Drawing.Size(30, 30)
+
+$label7 = New-Object System.Windows.Forms.Label
+$label7.Text = "7"
+$label7.Location = New-Object System.Drawing.Point(50,400)
+$label7.Size = New-Object System.Drawing.Size(30, 30)
+
+# - ADD -
+
+$tabpage1.Controls.Add($label)
+$tabpage1.Controls.Add($label1)
+$tabpage1.Controls.Add($label2)
+$tabpage1.Controls.Add($label3)
+$tabpage1.Controls.Add($label4)
+$tabpage1.Controls.Add($label5)
+$tabpage1.Controls.Add($label6)
+$tabpage1.Controls.Add($label7)
+
+# --- TEXT BOX PAGE 1 ---
+
+$TextBox1 = New-Object System.Windows.Forms.TextBox
+$TextBox1.Size = New-Object System.Drawing.Size(300, 30)
+$textBox1.Location = New-Object System.Drawing.Point(80, 100)
+
+$TextBox2 = New-Object System.Windows.Forms.TextBox
+$TextBox2.Size = New-Object System.Drawing.Size(300, 30)
+$textBox2.Location = New-Object System.Drawing.Point(80, 150)
+
+$TextBox3 = New-Object System.Windows.Forms.TextBox
+$TextBox3.Size = New-Object System.Drawing.Size(300, 30)
+$textBox3.Location = New-Object System.Drawing.Point(80, 200)
+
+$TextBox4 = New-Object System.Windows.Forms.TextBox
+$TextBox4.Size = New-Object System.Drawing.Size(300, 30)
+$textBox4.Location = New-Object System.Drawing.Point(80, 250)
+
+$TextBox5 = New-Object System.Windows.Forms.TextBox
+$TextBox5.Size = New-Object System.Drawing.Size(300, 30)
+$textBox5.Location = New-Object System.Drawing.Point(80, 300)
+
+$TextBox6 = New-Object System.Windows.Forms.TextBox
+$TextBox6.Size = New-Object System.Drawing.Size(300, 30)
+$textBox6.Location = New-Object System.Drawing.Point(80, 350)
+
+$TextBox7 = New-Object System.Windows.Forms.TextBox
+$TextBox7.Size = New-Object System.Drawing.Size(300, 30)
+$textBox7.Location = New-Object System.Drawing.Point(80, 400)
+
+# - ADD -
+
+$tabpage1.Controls.Add($TextBox1)
+$tabpage1.Controls.Add($TextBox2)
+$tabpage1.Controls.Add($TextBox3)
+$tabpage1.Controls.Add($TextBox4)
+$tabpage1.Controls.Add($TextBox5)
+$tabpage1.Controls.Add($TextBox6)
+$tabpage1.Controls.Add($TextBox7)
+
+# --- CHECK BOX PAGE 1 ---
+
+$checkBox1 = New-Object System.Windows.Forms.CheckBox
+$checkBox1.Location = New-Object System.Drawing.Point(400, 100)
+
+$checkBox2 = New-Object System.Windows.Forms.CheckBox
+$checkBox2.Location = New-Object System.Drawing.Point(400, 150)
+
+$checkBox3 = New-Object System.Windows.Forms.CheckBox
+$checkBox3.Location = New-Object System.Drawing.Point(400, 200)
+
+$checkBox4 = New-Object System.Windows.Forms.CheckBox
+$checkBox4.Location = New-Object System.Drawing.Point(400, 250)
+
+$checkBox5 = New-Object System.Windows.Forms.CheckBox
+$checkBox5.Location = New-Object System.Drawing.Point(400, 300)
+
+$checkBox6 = New-Object System.Windows.Forms.CheckBox
+$checkBox6.Location = New-Object System.Drawing.Point(400, 350)
+
+$checkBox7 = New-Object System.Windows.Forms.CheckBox
+$checkBox7.Location = New-Object System.Drawing.Point(400, 400)
+
+# - ADD -
+
+$tabpage1.Controls.Add($checkBox1)
+$tabpage1.Controls.Add($checkBox2)
+$tabpage1.Controls.Add($checkBox3)
+$tabpage1.Controls.Add($checkBox4)
+$tabpage1.Controls.Add($checkBox5)
+$tabpage1.Controls.Add($checkBox6)
+$tabpage1.Controls.Add($checkBox7)
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 1 ---
+
+$checkBox1.Add_Click(
+{
+$TextBox1.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox2.Add_Click(
+{
+$TextBox2.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox3.Add_Click(
+{
+$TextBox3.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox4.Add_Click(
+{
+$TextBox4.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox5.Add_Click(
+{
+$TextBox5.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox6.Add_Click(
+{
+$TextBox6.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+$checkBox7.Add_Click(
+{
+$TextBox7.Text = ""
+$checkBox1.Checked = $false
+}
+)
+
+# --- LABEL PAGE 2 ---
+
+$label_carousel = New-Object System.Windows.Forms.Label
+$label_carousel.Text = "Chemin de dossier :"
+$label_carousel.Location = New-Object System.Drawing.Point(50,50)
+$label_carousel.Size = New-Object System.Drawing.Size(200, 30)
+
+# - ADD - 
+
+$tabpage2.Controls.Add($label_carousel)
+
+# --- TEXT BOX PAGE 2 ---
+
+$textbox = New-Object System.Windows.Forms.TextBox
+$textBox.Location = New-Object System.Drawing.Point(250,50)
+$textBox.Size = New-Object System.Drawing.Size(200,100)
+
+# - ADD - 
+
+$tabpage2.Controls.Add($textBox)
+
+# --- BUTTON PAGE 2 ---
+
+$buttonValider = New-Object System.Windows.Forms.Button
+$buttonValider.Location = New-Object System.Drawing.Point(500, 50)
+$buttonValider.Size = New-Object System.Drawing.Size(200,30)
+$buttonValider.Text = "Valider !"
+
+$buttonNext = New-Object System.Windows.Forms.Button
+$buttonNext.Location = New-Object System.Drawing.Point(650, 750)
+$buttonNext.Size = New-Object System.Drawing.Size(200,30)
+$buttonNext.Text = "Next !"
+
+$buttonPrevious = New-Object System.Windows.Forms.Button
+$buttonPrevious.Location = New-Object System.Drawing.Point(50, 750)
+$buttonPrevious.Size = New-Object System.Drawing.Size(200,30)
+$buttonPrevious.Text = "Previous !"
+
+# - ADD - 
+
+$tabpage2.Controls.Add($buttonValider)
+$tabpage2.Controls.Add($buttonNext)
+$tabpage2.Controls.Add($buttonPrevious)
+
+# --- IMAGE PAGE 2 ---
+
+$image1 = New-Object System.Windows.Forms.pictureBox
+$image1.Location = New-Object System.Drawing.Point(50, 100)
+$image1.Size = New-Object System.Drawing.Size(700,700)
+$image1.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 2 ---
+
+$buttonValider.Add_Click(
+    {   
+
+    $files = Get-ChildItem -Path $textbox.Text
+    $Global:items = @()
+
+    Foreach ($x in $files){
+        if ($images.Contains($x.Extension.TrimStart('.').ToLower())){
+            $Global:items += Get-Item -Path $x.FullName
+        }
+    }
+
+    $image1.image = [system.drawing.image]::FromFile($Global:items[$Global:indice])
+    $tabpage2.controls.add($image1)
+    }
+)
+
+$buttonNext.Add_Click(
+    {
+    $global:indice++
+    $image1.image = [system.drawing.image]::FromFile($Global:items[$Global:indice])
+    }
+)
+
+$buttonPrevious.Add_Click(
+    {
+    $global:indice--
+    $image1.image = [system.drawing.image]::FromFile($Global:items[$Global:indice])
+    }
+)
+
+# --- LABEL PAGE 3 ---
+
+$label_ROBOT = New-Object System.Windows.Forms.Label
+$label_ROBOT.Text = "Texte : "
+$label_ROBOT.Size = New-Object System.Drawing.Size(100 , 40)
+$label_ROBOT.Location = New-Object System.Drawing.Point(50 , 50)
+
+# - ADD -
+
+$tabpage3.Controls.Add($label_ROBOT)
+
+# --- TEXT BOX PAGE 3 --- 
+
+$TextBox_ROBOT = New-Object System.Windows.Forms.TextBox
+$TextBox_ROBOT.Size = New-Object System.Drawing.Size(300, 300)
+$TextBox_ROBOT.Location = New-Object System.Drawing.Point(50, 100)
+$TextBox_ROBOT.Multiline = $true 
+$TextBox_ROBOT.Font = "Microsoft Sans Serif,20"
+
+# - ADD - 
+
+$tabpage3.Controls.Add($TextBox_ROBOT)
+
+# --- BUTTON PAGE 3 --- 
+
+$button_ROBOT = New-Object System.Windows.Forms.Button
+$button_ROBOT.Text = " Make it speak !"
+$button_ROBOT.Size = New-Object System.Drawing.Size(300 , 50)
+$button_ROBOT.Location = New-Object System.Drawing.Point(50 , 450)
+
+# - ADD - 
+
+$tabpage3.Controls.Add($button_ROBOT)
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 3 ---
+
+$button_ROBOT.Add_Click(
+    {
+    $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
+    $speaker.Speak($TextBox_ROBOT.Text)
+    }
+)
+
+# --- LABEL PAGE 4 --- 
+
+$label_GENE = New-Object System.Windows.Forms.Label
+$label_GENE.Text = "générer des mots de passe : "
+$label_GENE.Location = New-Object System.Drawing.Point(300,50)
+$label_GENE.Size = New-Object System.Drawing.Size(300, 30)
+
+$label_LONG = New-Object System.Windows.Forms.Label
+$label_LONG.Text = "Longueur du/des MDP : "
+$label_LONG.Location = New-Object System.Drawing.Point(50,100)
+$label_LONG.Size = New-Object System.Drawing.Size(250, 30)
+
+$label_QUANT = New-Object System.Windows.Forms.Label
+$label_QUANT.Text = "Quantité de MDP a générer : "
+$label_QUANT.Location = New-Object System.Drawing.Point(50,150)
+$label_QUANT.Size = New-Object System.Drawing.Size(300, 30)
+
+$label_CHIFFRE = New-Object System.Windows.Forms.Label
+$label_CHIFFRE.Text = "Inclure des chiffres : "
+$label_CHIFFRE.Location = New-Object System.Drawing.Point(50,200)
+$label_CHIFFRE.Size = New-Object System.Drawing.Size(200, 30)
+
+$label_MAJ = New-Object System.Windows.Forms.Label
+$label_MAJ.Text = "Inclure des majuscules : "
+$label_MAJ.Location = New-Object System.Drawing.Point(50,250)
+$label_MAJ.Size = New-Object System.Drawing.Size(250, 30)
+
+$label_SPECHAR = New-Object System.Windows.Forms.Label
+$label_SPECHAR.Text = "Inclure des caractères spéciaux : "
+$label_SPECHAR.Location = New-Object System.Drawing.Point(50,300)
+$label_SPECHAR.Size = New-Object System.Drawing.Size(350, 30)
+
+# - ADD -
+
+$tabpage4.Controls.Add($label_GENE)
+$tabpage4.Controls.Add($label_LONG)
+$tabpage4.Controls.Add($label_QUANT)
+$tabpage4.Controls.Add($label_CHIFFRE)
+$tabpage4.Controls.Add($label_MAJ)
+$tabpage4.Controls.Add($label_SPECHAR)
+
+# --- TEXT BOX PAGE 4 --- 
+
+$TextBox_LONG = New-Object System.Windows.Forms.TextBox
+$TextBox_LONG.Size = New-Object System.Drawing.Size(30, 20)
+$TextBox_LONG.Location = New-Object System.Drawing.Point(300, 100)
+$TextBox_LONG.Multiline = $true 
+
+$TextBox_QUANT = New-Object System.Windows.Forms.TextBox
+$TextBox_QUANT.Size = New-Object System.Drawing.Size(30, 20)
+$TextBox_QUANT.Location = New-Object System.Drawing.Point(350, 150)
+$TextBox_QUANT.Multiline = $true 
+
+$TextBox_RESULT = New-Object System.Windows.Forms.TextBox
+$TextBox_RESULT.Size = New-Object System.Drawing.Size(400, 300)
+$TextBox_RESULT.Location = New-Object System.Drawing.Point(50, 350)
+$TextBox_RESULT.Multiline = $true 
+$TextBox_RESULT.Font = "Microsoft Sans Serif,20"
+
+# - ADD - 
+
+$tabpage4.Controls.Add($TextBox_LONG)
+$tabpage4.Controls.Add($TextBox_QUANT)
+$tabpage4.Controls.Add($TextBox_RESULT)
+
+# --- CHECK BOX PAGE 4 ---
+
+$checkBox_CHIFFRE = New-Object System.Windows.Forms.CheckBox
+$checkBox_CHIFFRE.Location = New-Object System.Drawing.Point(250, 200)
+
+$checkBox_MAJ = New-Object System.Windows.Forms.CheckBox
+$checkBox_MAJ.Location = New-Object System.Drawing.Point(325, 250)
+
+$checkBox_SPECHAR = New-Object System.Windows.Forms.CheckBox
+$checkBox_SPECHAR.Location = New-Object System.Drawing.Point(400, 300)
+
+# - ADD - 
+
+$tabpage4.Controls.Add($checkBox_CHIFFRE)
+$tabpage4.Controls.Add($checkBox_MAJ)
+$tabpage4.Controls.Add($checkBox_SPECHAR)
+
+# --- BUTTON PAGE 4 ---
+
+$button_GEN = New-Object System.Windows.Forms.Button
+$button_GEN.Text = " Générer !"
+$button_GEN.Size = New-Object System.Drawing.Size(100 , 300)
+$button_GEN.Location = New-Object System.Drawing.Point(500 , 350)
+
+# - ADD - 
+
+$tabpage4.Controls.Add($button_GEN)
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 4 ---
+
+$button_GEN.Add_Click(
+{
+    $Length = $TextBox_LONG.Text
+    $Quantity = $TextBox_QUANT.Text
+
+        $Uri = "https://api.motdepasse.xyz/create/?include_lowercase&password_length=$Length&quantity=$Quantity"
+            if ($checkBox_CHIFFRE.Checked) {
+                $Uri += "&include_digits"
+            }
+            if ($checkBox_MAJ.Checked) {
+                $Uri += "&include_uppercase"
+            }
+            if ($checkBox_SPECHAR.Checked) {
+                $Uri += "&include_special_characters"
+            }
+        $Passwords = @()
+
+        Try {
+            $ApiResult = Invoke-RestMethod -Uri $Uri
+        }
+        Catch {
+            Write-Outut $_.Exception
+            Break
+        }
+  
+  
+        For($i=0;$i -lt $Length;$i++) {
+            $Passwords += $ApiResult.passwords[$i]
+        }
+        
+        $TextBox_RESULT.Text = $Passwords
+   
+}
+)
+
+# --- LABLE PAGE 5 --- 
+
+$label_FUN = New-Object System.Windows.Forms.Label
+$label_FUN.Text = "Voulez vous apprendre une information intéréssante aléatoire ? "
+$label_FUN.Location = New-Object System.Drawing.Point(150,50)
+$label_FUN.Size = New-Object System.Drawing.Size(600, 40)
+
+$label_FUN_L = New-Object System.Windows.Forms.Label
+$label_FUN_L.Text = "Langues disponibles : "
+$label_FUN_L.Location = New-Object System.Drawing.Point(50,100)
+$label_FUN_L.Size = New-Object System.Drawing.Size(225, 40)
+
+$label_FUN_EN = New-Object System.Windows.Forms.Label
+$label_FUN_EN.Text = "Anglais : "
+$label_FUN_EN.Location = New-Object System.Drawing.Point(275,100)
+$label_FUN_EN.Size = New-Object System.Drawing.Size(100, 40)
+
+$label_FUN_DE = New-Object System.Windows.Forms.Label
+$label_FUN_DE.Text = "Allemand : "
+$label_FUN_DE.Location = New-Object System.Drawing.Point(450,100)
+$label_FUN_DE.Size = New-Object System.Drawing.Size(110, 40)
+
+
+# - ADD - 
+
+$tabpage5.Controls.Add($label_FUN)
+$tabpage5.Controls.Add($label_FUN_L)
+$tabpage5.Controls.Add($label_FUN_EN)
+$tabpage5.Controls.Add($label_FUN_DE)
+
+# --- TEXT BOX PAGE 5 --- 
+
+$TextBox_RESULT_FUN = New-Object System.Windows.Forms.TextBox
+$TextBox_RESULT_FUN.Size = New-Object System.Drawing.Size(800, 400)
+$TextBox_RESULT_FUN.Location = New-Object System.Drawing.Point(50, 350)
+$TextBox_RESULT_FUN.Multiline = $true 
+$TextBox_RESULT_FUN.Font = "Microsoft Sans Serif,20"
+
+# - ADD - 
+
+$tabpage5.Controls.Add($TextBox_RESULT_FUN)
+
+# --- CHECK BOX PAGE 5 --- 
+
+$checkBox_EN = New-Object System.Windows.Forms.CheckBox
+$checkBox_EN.Location = New-Object System.Drawing.Point(375, 100)
+
+$checkBox_DE = New-Object System.Windows.Forms.CheckBox
+$checkBox_DE.Location = New-Object System.Drawing.Point(575, 100)
+
+# - ADD - 
+
+$tabpage5.controls.Add($checkBox_EN)
+$tabpage5.controls.Add($checkBox_DE)
+
+# --- BUTTON PAGE 5 ---
+
+$button_FUN = New-Object System.Windows.Forms.Button
+$button_FUN.Text = " Générer !"
+$button_FUN.Size = New-Object System.Drawing.Size(800 , 100)
+$button_FUN.Location = New-Object System.Drawing.Point(50, 200)
+
+# - ADD - 
+
+$tabpage5.Controls.Add($button_FUN)
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 5 ---
+
+$button_FUN.Add_Click(
+{
+    if ($checkBox_DE.Checked){
+        $url_FUN = "https://uselessfacts.jsph.pl/random.txt?language=de"
+        $FunFact = Invoke-RestMethod -Uri $url_FUN
+    }
+    if ($checkBox_EN.Checked){
+        $url_FUN = "https://uselessfacts.jsph.pl/random.txt?language=en"
+        $FunFact = Invoke-RestMethod -Uri $url_FUN
+    }
+
+    $TextBox_RESULT_FUN.Text = $FunFact
+
+}
+)
+
+# --- LABLE PAGE 6 --- 
+
+$label_INFO = New-Object System.Windows.Forms.Label
+$label_INFO.Text = "Infomation utilisateur :"
+$label_INFO.Location = New-Object System.Drawing.Point(150,50)
+$label_INFO.Size = New-Object System.Drawing.Size(300, 40)
+
+$label_VISA = New-Object System.Windows.Forms.Label
+$label_VISA.Text = "Visa :"
+$label_VISA.Location = New-Object System.Drawing.Point(150,150)
+$label_VISA.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_CB = New-Object System.Windows.Forms.Label
+$label_CB.Text = "Nom de la machine :"
+$label_CB.Location = New-Object System.Drawing.Point(150,200)
+$label_CB.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_VERS_BIOS = New-Object System.Windows.Forms.Label
+$label_VERS_BIOS.Text = "Version du BIOS :"
+$label_VERS_BIOS.Location = New-Object System.Drawing.Point(150,250)
+$label_VERS_BIOS.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_MOD = New-Object System.Windows.Forms.Label
+$label_MOD.Text = "Model de la machine :"
+$label_MOD.Location = New-Object System.Drawing.Point(150,300)
+$label_MOD.Size = New-Object System.Drawing.Size(250, 40)
+
+$label_VERS_MAST = New-Object System.Windows.Forms.Label
+$label_VERS_MAST.Text = "Version du Master :"
+$label_VERS_MAST.Location = New-Object System.Drawing.Point(150,350)
+$label_VERS_MAST.Size = New-Object System.Drawing.Size(250, 40)
+
+# -- ADD -- 
+
+$tabpage6.Controls.Add($label_INFO);
+$tabpage6.Controls.Add($label_VISA);
+$tabpage6.Controls.Add($label_CB);
+$tabpage6.Controls.Add($label_VERS_BIOS);
+$tabpage6.Controls.Add($label_MOD);
+$tabpage6.Controls.Add($label_VERS_MAST);
+
+# --- TEXT BOX PAGE 6 --- 
+
+$TextBox_VISA = New-Object System.Windows.Forms.TextBox
+$TextBox_VISA.Enabled = $false
+$TextBox_VISA.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VISA.Location = New-Object System.Drawing.Point(400, 150)
+$TextBox_VISA.Font = "Microsoft Sans Serif,20"
+$TextBox_VISA.Text = ((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]
+
+$TextBox_CB = New-Object System.Windows.Forms.TextBox
+$TextBox_CB.Enabled = $false
+$TextBox_CB.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_CB.Location = New-Object System.Drawing.Point(400, 200)
+$TextBox_CB.Font = "Microsoft Sans Serif,20"
+$TextBox_CB.Text = [system.environment]::MachineName
+
+$TextBox_VERS_BIOS = New-Object System.Windows.Forms.TextBox
+$TextBox_VERS_BIOS.Enabled = $false
+$TextBox_VERS_BIOS.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VERS_BIOS.Location = New-Object System.Drawing.Point(400, 250)
+$TextBox_VERS_BIOS.Font = "Microsoft Sans Serif,20"
+$TextBox_VERS_BIOS.Text = (Get-CimInstance -Namespace root\cimv2 -ClassName Win32_BIOS).Name
+
+$TextBox_MOD = New-Object System.Windows.Forms.TextBox
+$TextBox_MOD.Enabled = $false
+$TextBox_MOD.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_MOD.Location = New-Object System.Drawing.Point(400, 300)
+$TextBox_MOD.Font = "Microsoft Sans Serif,20"
+$TextBox_MOD.Text = (Get-CimInstance -Namespace root\cimv2 -ClassName Win32_ComputerSystem).Model
+
+$TextBox_VERS_MAST = New-Object System.Windows.Forms.TextBox
+$TextBox_VERS_MAST.Enabled = $false
+$TextBox_VERS_MAST.Size = New-Object System.Drawing.Size(450, 40)
+$TextBox_VERS_MAST.Location = New-Object System.Drawing.Point(400, 350)
+$TextBox_VERS_MAST.Font = "Microsoft Sans Serif,20"
+$TextBox_VERS_MAST.Text = (Get-CimInstance -class Win32_OperatingSystem).Version
+
+# -- ADD -- 
+
+$tabpage6.Controls.Add($TextBox_VISA);
+$tabpage6.Controls.Add($TextBox_CB);
+$tabpage6.Controls.Add($TextBox_VERS_BIOS);
+$tabpage6.Controls.Add($TextBox_MOD);
+$tabpage6.Controls.Add($TextBox_VERS_MAST);
+
+# --- LABEL PAGE 7 --- 
+
+$label_WIFI = New-Object System.Windows.Forms.Label
+$label_WIFI.Text = "En appuyant sur ce bouton vous deviendrez un hacker qui va connaitre les mots de passe wifi des réseau sur lesquels vous vous etes deja connecter xD"
+$label_WIFI.Location = New-Object System.Drawing.Point(150,50)
+$label_WIFI.Size = New-Object System.Drawing.Size(500, 100)
+
+# -- ADD -- 
+
+$tabpage7.Controls.Add($label_WIFI);
+
+# --- BUTTON PAGE 7 ---
+
+$button_WIFI = New-Object System.Windows.Forms.Button
+$button_WIFI.Text = "Hacker !"
+$button_WIFI.Size = New-Object System.Drawing.Size(800 , 100)
+$button_WIFI.Location = New-Object System.Drawing.Point(50, 200)
+
+# -- ADD --
+
+$tabpage7.Controls.Add($button_WIFI);
+
+# --- FUNCTIONS AND BUTTON ADD CLICK PAGE 7 ---
+
+$button_WIFI.Add_Click(
+{
+    $allProfiles = netsh wlan show profiles
+
+$nomDeResaux = @() ;
+$wifi = @{} 
+
+for ($i = 9 ; $i -lt $allProfiles.Length ; $i++){
+    $decoupe = $allProfiles[$i] -Split(" ÿ: ");
+    $nomDeResaux += $decoupe[1];
+}
+
+
+$index = 0 ;
+while ($index -lt $nomDeResaux.Count - 1){
+    $temp = $nomDeResaux[$index];
+    $specProfile = netsh wlan show profile name=$temp key=clear 
+    $decoupe = $specProfile[32] -split(" : ");
+    $wifi.Add($temp,  $decoupe[1]);
+    $index++;
+}
+
+$wifi | Out-GridView -Title 'Mot de passe des réseaux connus'
+
+}
+)
+
+[void] $Form.ShowDialog()

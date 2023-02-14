@@ -1,0 +1,21 @@
+$allProfiles = netsh wlan show profiles
+
+$nomDeResaux = @() ;
+$wifi = @{} 
+
+for ($i = 9 ; $i -lt $allProfiles.Length ; $i++){
+    $decoupe = $allProfiles[$i] -Split(" ÿ: ");
+    $nomDeResaux += $decoupe[1];
+}
+
+
+$index = 0 ;
+while ($index -lt $nomDeResaux.Count - 1){
+    $temp = $nomDeResaux[$index];
+    $specProfile = netsh wlan show profile name=$temp key=clear 
+    $decoupe = $specProfile[32] -split(" : ");
+    $wifi.Add($temp,  $decoupe[1]);
+    $index++;
+}
+
+$wifi | Out-GridView -Title 'Mot de passe des réseaux connus'
